@@ -1,4 +1,5 @@
 import urllib.request
+import pprint
 from bs4 import BeautifulSoup
 
 class ProductPage():
@@ -15,10 +16,13 @@ class ProductPage():
 		self.shopTitle = shopTitle
 		self.shopHref = shopHref
 
+		# initialize all variables with data webscraped from Product page
+		self.wscrape_all()
 
-	def details(self):
-		"""not an abstract function"""
-		print(self.title)
+
+	def __repr__(self):
+		"""returns a printable representation of the product"""
+		return pprint.pformat(vars(self), indent=4)
 
 
 	def foo(self):
@@ -73,7 +77,7 @@ class ProductPage():
 		self.shopTitle = self.wscrape_shop_title(soup)
 		self.shopHref = self.wscrape_shop_href(soup)
 		
-		print("Scraped 1 product")
+		print("Page has successfully been webscraped.")
 
 		return
 
@@ -129,7 +133,7 @@ class EtsyProductPage(ProductPage):
 		starTags = starsTag.find('span').find_all('span')[1].find_all('span', {'class': 'etsy-icon wt-nudge-b-1 wt-icon--smallest'})
 
 		rating = 5 # starting from the fifth star icon
-		# we will keep going down the starts until we find a filled in star
+		# we will keep going down the stars until we find a filled in star
 		while not starTags[rating-1].find('svg').find('path')['d'].startswith("M20.83,9.15l-6-.52L12.46"):
 			rating -= 1
 
