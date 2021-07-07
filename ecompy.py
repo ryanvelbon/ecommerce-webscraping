@@ -1,21 +1,21 @@
-import urllib.request
+import requests
 import pprint
 from bs4 import BeautifulSoup
 from multipledispatch import dispatch
 
 class ProductPage():
 
-	def __init__(self, href, title=None, price=None, nSales=None, nStock=None, rating=None, shopTitle=None, shopHref=None):
+	def __init__(self, url, title=None, price=None, nSales=None, nStock=None, rating=None, shopTitle=None, shopURL=None):
 		if type(self) is ProductPage:
 			raise Exception('ProductPage is an abstract class and cannot be instantiated directly')
-		self.href = href
+		self.url = url
 		self.title = title
 		self.price = price
 		self.nSales = nSales
 		self.nStock = nStock
 		self.rating = rating
 		self.shopTitle = shopTitle
-		self.shopHref = shopHref
+		self.shopURL = shopURL
 
 		# initialize all variables with data webscraped from Product page
 		self.wscrape_all()
@@ -49,26 +49,24 @@ class ProductPage():
 	def wscrape_shopTitle(self):
 		raise NotImplementedError()
 
-	def wscrape_shopHref(self):
+	def wscrape_shopURL(self):
 		raise NotImplementedError()
 
 
 
 	def wscrape_all(self):
 		""" web scrapes various data from the Product page"""
+		
+		headers = {
+			'Access-Control-Allow-Origin': '*',
+			'Access-Control-Allow-Methods': 'GET',
+			'Access-Control-Allow-Headers': 'Content-Type',
+			'Access-Control-Max-Age': '3600',
+			'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0'
+		}
 
-		try:
-			webURL = urllib.request.urlopen(self.href)
-		except urllib.error.HTTPError:
-			print("Error {}. Skipped".format(webURL.getcode()))
-			# raise Error
-		except:
-			print("Something went wrong...not sure what tho...")
-			# raise Error
-
-		html = webURL.read()
-
-		soup = BeautifulSoup(html, 'html.parser')
+		req = requests.get(self.url, headers)
+		soup = BeautifulSoup(req.content, 'html.parser')
 
 		self.title = self.wscrape_title(soup)
 		self.price = self.wscrape_price(soup)
@@ -76,7 +74,7 @@ class ProductPage():
 		self.nStock = self.wscrape_nStock(soup)
 		self.rating = self.wscrape_rating(soup)
 		self.shopTitle = self.wscrape_shop_title(soup)
-		self.shopHref = self.wscrape_shop_href(soup)
+		self.shopURL = self.wscrape_shop_url(soup)
 		
 		print("Page has successfully been webscraped.")
 
@@ -85,7 +83,30 @@ class ProductPage():
 
 
 class AmazonProductPage(ProductPage):
-	pass
+	
+	def __init__(self, *args, **kwargs):
+		super(AmazonProductPage, self).__init__(*args, **kwargs)
+
+	def wscrape_title(self, soup):
+		return "lorem"
+
+	def wscrape_price(self, soup):
+		return "lorem"
+
+	def wscrape_nSales(self, soup):
+		return "lorem"
+
+	def wscrape_rating(self, soup):
+		return "lorem"
+
+	def wscrape_nStock(self, soup):
+		return "lorem"
+
+	def wscrape_shop_title(self, soup):
+		return "lorem"
+
+	def wscrape_shop_url(self, soup):
+		return "lorem"
 
 
 class EbayProductPage(ProductPage):
@@ -151,7 +172,7 @@ class EtsyProductPage(ProductPage):
 		return soup.find('p', {'class': 'wt-text-body-01 wt-mr-xs-1'}).text.strip()
 
 
-	def wscrape_shop_href(self, soup):
+	def wscrape_shop_url(self, soup):
 		
 		return soup.find('p', {'class': 'wt-text-body-01 wt-mr-xs-1'}).find('a')['href'].split("?")[0]
 
@@ -172,6 +193,26 @@ def convert_file_to_list(filename):
 	return items
 
 
+def resolve_product_page(url):
+	""" Returns the appropriate ProductPage subclass, fully instantiated.
+
+		amazon.com url will return an AmazonProductPage object
+		ebay.com url will return an EbayProductPage object
+
+		:param url:
+
+	"""
+	if "www.amazon.com" in url:
+		return AmazonProductPage(url)
+	elif "www.ebay.com" in url:
+		return EbayProductPage(url)
+	elif "www.etsy.com" in url:
+		return EtsyProductPage(url)
+	else:
+		raise Exception("Sorry. The domain name you provided is not supported in this moment.")
+
+
+
 @dispatch(str)
 def webscrape_many(filename):
 	"""Webscrape all pages listed out line by line in a file.
@@ -182,26 +223,34 @@ def webscrape_many(filename):
 
 	products = []
 
-	hrefs = convert_file_to_list(filename)
+	urls = convert_file_to_list(filename)
 
-	for href in hrefs:
-		
-		products.append(EtsyProductPage(href))
+	for url in urls:
+		# p = EtsyProductPage(url)
+		p = resolve_product_page(url)
+		products.append(p)
 
 	return products
 
 
-@dispatch(list)
-def webscrape_many(hrefs):
-	"""Webscrape all pages specified by hrefs.
+# @dispatch(list)
+# def webscrape_many(urls):
+# 	"""Webscrape all pages specified by urls.
 
-		:param hrefs: An array of hrefs.
+# 		:param urls: An array of urls.
+# 	"""
+
+# 	products = []
+
+# 	for url in urls:
+# 		p = EtsyProductPage(url)
+# 		products.append(p)
+
+# 	return products
+
+def foozoo(query, website):
 	"""
 
-	products = []
 
-	for href in hrefs:
-
-		products.append(EtsyProductPage(href))
-
-	return products
+		:param query: A string representing the search query.
+	"""

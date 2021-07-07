@@ -13,7 +13,7 @@ CREATE TABLE `products` (
   `n_sales` SMALLINT UNSIGNED,
   `rating` decimal(1,1),
   `shop_title` varchar(100) NOT NULL,
-  `shop_href` varchar(200) NOT NULL,
+  `shop_url` varchar(200) NOT NULL,
   
   PRIMARY KEY (`id`)
  
