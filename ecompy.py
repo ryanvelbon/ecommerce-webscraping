@@ -1,6 +1,7 @@
 import urllib.request
 import pprint
 from bs4 import BeautifulSoup
+from multipledispatch import dispatch
 
 class ProductPage():
 
@@ -153,3 +154,54 @@ class EtsyProductPage(ProductPage):
 	def wscrape_shop_href(self, soup):
 		
 		return soup.find('p', {'class': 'wt-text-body-01 wt-mr-xs-1'}).find('a')['href'].split("?")[0]
+
+
+
+def convert_file_to_list(filename):
+	"""Reads in a file like links.example.txt and returns a list"""
+
+	items = []
+
+	with open(filename) as f:
+		lines = f.readlines()
+
+	for line in lines:
+
+		items.append(line.strip())
+
+	return items
+
+
+@dispatch(str)
+def webscrape_many(filename):
+	"""Webscrape all pages listed out line by line in a file.
+
+		:param filename: The file which contains a list of all
+		 the pages that are to be webscraped.
+	"""
+
+	products = []
+
+	hrefs = convert_file_to_list(filename)
+
+	for href in hrefs:
+		
+		products.append(EtsyProductPage(href))
+
+	return products
+
+
+@dispatch(list)
+def webscrape_many(hrefs):
+	"""Webscrape all pages specified by hrefs.
+
+		:param hrefs: An array of hrefs.
+	"""
+
+	products = []
+
+	for href in hrefs:
+
+		products.append(EtsyProductPage(href))
+
+	return products
